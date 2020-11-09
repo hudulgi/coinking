@@ -20,17 +20,24 @@ def get_target_price(ticker):
 now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
-target_coin = "BTC"
-target_price = get_target_price(target_coin)
+target_coins = ["BTC", "ETH"]
+
+target_price = dict()
+current_price = dict()
+
+for coin in target_coins:
+    target_price[coin] = get_target_price(coin)
 
 
 while True:
     now = datetime.datetime.now()
     if mid < now < mid + datetime.timedelta(seconds=10):
-        target_price = get_target_price(target_coin)
+        for coin in target_coins:
+            target_price[coin] = get_target_price(coin)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
-    current_price = pybithumb.get_current_price(target_coin)
+    for coin in target_coins:
+        current_price[coin] = pybithumb.get_current_price(coin)
     print(current_price)
 
     time.sleep(1)
