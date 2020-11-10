@@ -4,8 +4,7 @@ import datetime
 
 
 def get_target_price(ticker):
-    df = pybithumb.get_candlestick(ticker)
-    df.to_csv(f"{ticker}.csv")
+    df = get_target_db(ticker)
     yesterday = df.iloc[-2]
 
     today_open = yesterday['close']
@@ -17,10 +16,25 @@ def get_target_price(ticker):
     return _target_price
 
 
+def get_target_db(ticker):
+    df = pybithumb.get_candlestick(ticker)
+    last_index = df.index[-1]
+    df.to_csv(f"{ticker}_1.csv")
+
+    while not last_index.day == now.day:
+        df = pybithumb.get_candlestick(ticker)
+        last_index = df.index[-1]
+        time.sleep(1)
+
+    df.to_csv(f"{ticker}_2.csv")
+
+    return df
+
+
 now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
-target_coins = ["BTC", "ETH"]
+target_coins = ["BTC"]
 
 target_price = dict()
 current_price = dict()
