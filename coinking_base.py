@@ -32,7 +32,7 @@ def get_target_db(ticker):
 now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
-target_coins = ["BTC"]
+target_coins = ["BTC", "ETH", "XRP"]
 
 target_price = dict()
 current_price = dict()
@@ -50,11 +50,17 @@ while True:
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
     for coin in target_coins:
-        current_price[coin] = pybithumb.get_current_price(coin)
+        _current = pybithumb.get_current_price(coin)
 
-        if current_price[coin] >= target_price[coin] and buy_flag[coin]:
+        if _current is None:
+            print("예외발생")
+            continue
+
+        current_price[coin] = _current
+
+        if _current >= target_price[coin] and buy_flag[coin]:
             buy_flag[coin] = False
-            print(f"매수알림 {coin} : {target_price[coin]}")
-    print(current_price)
+            print(f"매수알림 {coin} : 목가 {target_price[coin]}, 현재가 {_current}")
+    #print(current_price)
 
     time.sleep(1)
