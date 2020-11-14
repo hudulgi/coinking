@@ -1,6 +1,7 @@
 import time
 import pybithumb
 import datetime
+import socket
 
 
 def get_target_price(ticker):
@@ -32,24 +33,48 @@ def get_target_db(ticker):
 now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
-target_coins = ["BTC", "ETH", "XRP"]
+HOST = '127.0.0.1'
+PORT = 6000
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((HOST, PORT))
+
+target_coins = ["XRP"]
 
 target_price = dict()
 current_price = dict()
 buy_flag = dict()
+watch_coin = target_coins.copy()
 
 for coin in target_coins:
     target_price[coin] = get_target_price(coin)
-    buy_flag[coin] = True
+    client_socket.sendall(coin.encode())
+    prd = client_socket.recv(1024).decode()
+    print(coin, prd)
+    if prd == 'W':
+        buy_flag[coin] = True
+        watch_coin.append(coin)
+    elif prd == 'L':
+        buy_flag[coin] = False
+        watch_coin.remove(coin)
 
 while True:
     now = datetime.datetime.now()
     if mid + datetime.timedelta(seconds=30) < now < mid + datetime.timedelta(seconds=40):
+        mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
         for coin in target_coins:
             target_price[coin] = get_target_price(coin)
-        mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
+            client_socket.sendall(coin.encode())
+            prd = client_socket.recv(1024).decode()
+            print(coin, prd)
+            if prd == 'W':
+                buy_flag[coin] = True
+                watch_coin.append(coin)
+            elif prd == 'L':
+                buy_flag[coin] = False
+                watch_coin.remove(coin)
 
-    for coin in target_coins:
+    for coin in watch_coin:
         _current = pybithumb.get_current_price(coin)
 
         if _current is None:
@@ -60,7 +85,9 @@ while True:
 
         if _current >= target_price[coin] and buy_flag[coin]:
             buy_flag[coin] = False
-            print(f"매수알림 {coin} : 목가 {target_price[coin]}, 현재가 {_current}")
-    #print(current_price)
+            print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
+    print(current_price)
 
     time.sleep(1)
+
+client_socket.close()
