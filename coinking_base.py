@@ -19,14 +19,12 @@ def get_target_price(ticker):
 def get_target_db(ticker):
     df = pybithumb.get_candlestick(ticker)
     last_index = df.index[-1]
-    df.to_csv(f"{ticker}_1.csv")
-
     while not last_index.day == now.day:
         df = pybithumb.get_candlestick(ticker)
         last_index = df.index[-1]
-        time.sleep(1)
+        time.sleep(10)
 
-    df.to_csv(f"{ticker}_2.csv")
+    df.to_csv(f"data/{ticker}.csv")
 
     return df
 
@@ -38,20 +36,25 @@ target_coins = ["BTC"]
 
 target_price = dict()
 current_price = dict()
+buy_flag = dict()
 
 for coin in target_coins:
     target_price[coin] = get_target_price(coin)
-
+    buy_flag[coin] = True
 
 while True:
     now = datetime.datetime.now()
-    if mid < now < mid + datetime.timedelta(seconds=10):
+    if mid + datetime.timedelta(seconds=30) < now < mid + datetime.timedelta(seconds=40):
         for coin in target_coins:
             target_price[coin] = get_target_price(coin)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
     for coin in target_coins:
         current_price[coin] = pybithumb.get_current_price(coin)
+
+        if current_price[coin] >= target_price[coin] and buy_flag[coin]:
+            buy_flag[coin] = False
+            print(f"매수알림 {coin} : {target_price[coin]}")
     print(current_price)
 
     time.sleep(1)
