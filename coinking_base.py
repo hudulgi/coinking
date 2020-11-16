@@ -30,6 +30,22 @@ def get_target_db(ticker):
     return df
 
 
+def update_target_watch_coin(_target_coins):
+    _watch_coin = []
+    _buy_flag = dict()
+    for coin in _target_coins:
+        target_price[coin] = get_target_price(coin)
+        client_socket.sendall(coin.encode())
+        prd = client_socket.recv(1024).decode()
+        print(coin, prd)
+        if prd == 'W':
+            _buy_flag[coin] = True
+            watch_coin.append(coin)
+        elif prd == 'L':
+            _buy_flag[coin] = False
+    return _watch_coin, _buy_flag
+
+
 now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
@@ -39,40 +55,19 @@ PORT = 6000
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 
-target_coins = ["XRP"]
+target_coins = ["BTC", "ETH", "XRP"]
 
 target_price = dict()
 current_price = dict()
-buy_flag = dict()
-watch_coin = target_coins.copy()
 
-for coin in target_coins:
-    target_price[coin] = get_target_price(coin)
-    client_socket.sendall(coin.encode())
-    prd = client_socket.recv(1024).decode()
-    print(coin, prd)
-    if prd == 'W':
-        buy_flag[coin] = True
-        watch_coin.append(coin)
-    elif prd == 'L':
-        buy_flag[coin] = False
-        watch_coin.remove(coin)
+watch_coin, buy_flag = update_target_watch_coin(target_coins)
 
 while True:
     now = datetime.datetime.now()
     if mid + datetime.timedelta(seconds=30) < now < mid + datetime.timedelta(seconds=40):
+        print('\n')
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
-        for coin in target_coins:
-            target_price[coin] = get_target_price(coin)
-            client_socket.sendall(coin.encode())
-            prd = client_socket.recv(1024).decode()
-            print(coin, prd)
-            if prd == 'W':
-                buy_flag[coin] = True
-                watch_coin.append(coin)
-            elif prd == 'L':
-                buy_flag[coin] = False
-                watch_coin.remove(coin)
+        watch_coin, buy_flag = update_target_watch_coin(target_coins)
 
     for coin in watch_coin:
         _current = pybithumb.get_current_price(coin)
@@ -86,7 +81,7 @@ while True:
         if _current >= target_price[coin] and buy_flag[coin]:
             buy_flag[coin] = False
             print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
-    print(current_price)
+    print(f"\r{current_price}", end='')
 
     time.sleep(1)
 
