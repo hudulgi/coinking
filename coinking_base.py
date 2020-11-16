@@ -33,16 +33,16 @@ def get_target_db(ticker):
 def update_target_watch_coin(_target_coins):
     _watch_coin = []
     _buy_flag = dict()
-    for coin in _target_coins:
-        target_price[coin] = get_target_price(coin)
-        client_socket.sendall(coin.encode())
+    for _coin in _target_coins:
+        target_price[_coin] = get_target_price(_coin)
+        client_socket.sendall(_coin.encode())
         prd = client_socket.recv(1024).decode()
-        print(coin, prd)
+        print(_coin, prd)
         if prd == 'W':
-            _buy_flag[coin] = True
-            watch_coin.append(coin)
+            _buy_flag[_coin] = True
+            _watch_coin.append(_coin)
         elif prd == 'L':
-            _buy_flag[coin] = False
+            _buy_flag[_coin] = False
     return _watch_coin, _buy_flag
 
 
