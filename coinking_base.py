@@ -34,45 +34,32 @@ def get_target_db(ticker):
 
 
 def update_target_watch_coin(_target_coins):
+    """
+    예측서버로 ticker 전송하여 예측결과 수신
+    :param _target_coins: ticker
+    :return: 당일 감시 리스트, 중복 알림 방지 딕셔너리
+    """
     _watch_coin = []
     _buy_flag = dict()
+
+    # 서버 접속
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((HOST, PORT))
+    print("connected to server")
+
     for _coin in _target_coins:
         target_price[_coin] = get_target_price(_coin)
-        _prd = send_massages(_coin)
+        client_socket.sendall(_coin.encode())
+        _prd = client_socket.recv(1024).decode()
         print(_coin, _prd)
         if _prd == 'W':
             _buy_flag[_coin] = True
             _watch_coin.append(_coin)
         elif _prd == 'L':
             _buy_flag[_coin] = False
+
+    client_socket.close()
     return _watch_coin, _buy_flag
-
-
-def send_massages(msg):
-    """
-    예측 서버에 ticker 전송하여 예측결과 수신
-    연결 끊어졌을 경우 재접속 실행
-    :param msg:ticker
-    :return: 예측결과
-    """
-    global connected, client_socket
-    try:
-        client_socket.sendall(msg.encode())
-        reply = client_socket.recv(1024).decode()
-        return reply
-    except socket.error:
-        connected = False
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("connection lost.. reconnecting")
-
-        # 서버 재연결 시작
-        while not connected:
-            try:
-                client_socket.connect((HOST, PORT))
-                connected = True
-                print("re-connection successful")
-            except socket.error:
-                time.sleep(2)
 
 
 now = datetime.datetime.now()
@@ -81,10 +68,6 @@ mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 # 소켓 설정 및 접속
 HOST = '127.0.0.1'
 PORT = 6000
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((HOST, PORT))
-connected = True
-print("connected to server")
 
 # 감시 코인
 target_coins = ["BTC", "ETH", "XRP"]
@@ -118,4 +101,4 @@ while True:
 
     time.sleep(1)
 
-client_socket.close()
+
