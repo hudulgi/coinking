@@ -4,38 +4,43 @@ import datetime
 import socket
 
 
-def get_target_price(ticker):
-    df = get_target_db(ticker)
-    yesterday = df.iloc[-2]
+def get_db_and_target_price(ticker, now_day):
+    """
+    캔들 데이터 수신하여 마지막 데이터 검사
+    자정직후 당일/전일 데이터가 없을 수 있으므로 마지막 데이터를 검사한다.
+    데이터 문제 없을 경우 csv파일 출력
+    :param now_day: 오늘 날짜(int)
+    :param ticker: ticker
+    :return: 캔들 데이터
+    """
+    df = pybithumb.get_candlestick(ticker)
+    last_index1 = df.index[-1]  # 1일전
+    last_index2 = df.index[-2]  # 2일전
 
+    while not (last_index1.day == now_day) and (last_index2.day == now_day - 1):
+        print("DB 수신 대기")
+        df = pybithumb.get_candlestick(ticker)
+        last_index1 = df.index[-1]  # 1일전
+        last_index2 = df.index[-2]  # 2일전
+        print(f"{now_day}  :  {last_index2}  :  {last_index1}")
+        time.sleep(10)
+
+    yesterday = df.iloc[-2]
     today_open = yesterday['close']
     yesterday_high = yesterday['high']
     yesterday_low = yesterday['low']
     _target_price = today_open + (yesterday_high - yesterday_low) * 0.5
     print(ticker, _target_price)
 
+    df.to_csv(f"data/{ticker}.csv")
+
     return _target_price
 
 
-def get_target_db(ticker):
-    df = pybithumb.get_candlestick(ticker)
-    last_index1 = df.index[-1]  # 1일전
-    last_index2 = df.index[-2]  # 2일전
-
-    while not (last_index1.day == now.day) and (last_index2.day == now.day - 1):
-        df = pybithumb.get_candlestick(ticker)
-        last_index1 = df.index[-1]  # 1일전
-        last_index2 = df.index[-2]  # 2일전
-        time.sleep(10)
-
-    df.to_csv(f"data/{ticker}.csv")
-
-    return df
-
-
-def update_target_watch_coin(_target_coins):
+def update_target_watch_coin(_target_coins, now_day):
     """
     예측서버로 ticker 전송하여 예측결과 수신
+    :param now_day: 오늘 날짜(int)
     :param _target_coins: ticker
     :return: 당일 감시 리스트, 중복 알림 방지 딕셔너리
     """
@@ -48,7 +53,7 @@ def update_target_watch_coin(_target_coins):
     print("connected to server")
 
     for _coin in _target_coins:
-        target_price[_coin] = get_target_price(_coin)
+        target_price[_coin] = get_db_and_target_price(_coin, now_day)
         client_socket.sendall(_coin.encode())
         _prd = client_socket.recv(1024).decode()
         print(_coin, _prd)
@@ -75,15 +80,15 @@ target_coins = ["BTC", "ETH", "XRP"]
 target_price = dict()
 current_price = dict()
 
-watch_coin, buy_flag = update_target_watch_coin(target_coins)
+watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 
 while True:
     now = datetime.datetime.now()
-    if mid + datetime.timedelta(seconds=30) < now < mid + datetime.timedelta(seconds=40):
+    if mid + datetime.timedelta(seconds=10) < now < mid + datetime.timedelta(seconds=20):
         current_price = dict()
-        print('\n')
+        print('\n', now)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
-        watch_coin, buy_flag = update_target_watch_coin(target_coins)
+        watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 
     for coin in watch_coin:
         _current = pybithumb.get_current_price(coin)
@@ -100,5 +105,3 @@ while True:
     print(f"\r{current_price}", end='')
 
     time.sleep(1)
-
-
