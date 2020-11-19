@@ -19,10 +19,13 @@ def get_target_price(ticker):
 
 def get_target_db(ticker):
     df = pybithumb.get_candlestick(ticker)
-    last_index = df.index[-1]
-    while not last_index.day == now.day:
+    last_index1 = df.index[-1]  # 1일전
+    last_index2 = df.index[-2]  # 2일전
+
+    while not (last_index1.day == now.day) and (last_index2.day == now.day - 1):
         df = pybithumb.get_candlestick(ticker)
-        last_index = df.index[-1]
+        last_index1 = df.index[-1]  # 1일전
+        last_index2 = df.index[-2]  # 2일전
         time.sleep(10)
 
     df.to_csv(f"data/{ticker}.csv")
@@ -36,12 +39,12 @@ def update_target_watch_coin(_target_coins):
     for _coin in _target_coins:
         target_price[_coin] = get_target_price(_coin)
         client_socket.sendall(_coin.encode())
-        prd = client_socket.recv(1024).decode()
-        print(_coin, prd)
-        if prd == 'W':
+        _prd = client_socket.recv(1024).decode()
+        print(_coin, _prd)
+        if _prd == 'W':
             _buy_flag[_coin] = True
             _watch_coin.append(_coin)
-        elif prd == 'L':
+        elif _prd == 'L':
             _buy_flag[_coin] = False
     return _watch_coin, _buy_flag
 
@@ -65,6 +68,7 @@ watch_coin, buy_flag = update_target_watch_coin(target_coins)
 while True:
     now = datetime.datetime.now()
     if mid + datetime.timedelta(seconds=30) < now < mid + datetime.timedelta(seconds=40):
+        current_price = dict()
         print('\n')
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
         watch_coin, buy_flag = update_target_watch_coin(target_coins)
