@@ -17,14 +17,14 @@ def get_db_and_target_price(ticker, now_day):
     last_index1 = df.index[-1]  # 1일전
     last_index2 = df.index[-2]  # 2일전
 
-    while not (last_index1.day == now_day) and (last_index2.day == now_day - 1):
+    while not ((last_index1.day == now_day) and (last_index2.day == now_day - 1)):
         print("DB 수신 대기")
+        time.sleep(10)
         df = pybithumb.get_candlestick(ticker)
         last_index1 = df.index[-1]  # 1일전
         last_index2 = df.index[-2]  # 2일전
-        print(f"{now_day}  :  {last_index2}  :  {last_index1}")
-        time.sleep(10)
 
+    print(f"{now_day}  :  {last_index2}  :  {last_index1}")
     yesterday = df.iloc[-2]
     today_open = yesterday['close']
     yesterday_high = yesterday['high']
@@ -84,7 +84,7 @@ watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 
 while True:
     now = datetime.datetime.now()
-    if mid + datetime.timedelta(seconds=10) < now < mid + datetime.timedelta(seconds=20):
+    if mid < now < mid + datetime.timedelta(seconds=10):
         current_price = dict()
         print('\n', now)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
