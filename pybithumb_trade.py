@@ -1,9 +1,11 @@
 import pybithumb
 import mykey
-import time
 
 con_key = mykey.con_key
 sec_key = mykey.sec_key
+
+bithumb = pybithumb.Bithumb(con_key, sec_key)
+
 
 def price_filter(value):
     a = 1
@@ -38,7 +40,7 @@ def price_filter(value):
 def amount_filter(price, ref):
     a = 1
     coff = 10000
-    amount = ref / price * coff
+    _amount = ref / price * coff
     if price < 100:
         a = 10 * coff
     if 100 <= price < 1000:
@@ -51,17 +53,19 @@ def amount_filter(price, ref):
         a = 0.001 * coff
     if 1000000 <= price:
         a = 0.0001 * coff
-    return amount // a * a / coff
+    return _amount // a * a / coff
 
-bithumb = pybithumb.Bithumb(con_key, sec_key)
 
-order = bithumb.buy_limit_order("XRP", 300, 5)
-print(order)
+def sell_crypto_currency(ticker):
+    unit = bithumb.get_balance(ticker)[0]
+    print(f"보유잔고 {ticker} : {unit}")
+    if unit > 0:
+        bithumb.sell_market_order(ticker, unit)
+        print(f"매도주문 {ticker} : {unit}")
 
-time.sleep(5)
-amount = bithumb.get_outstanding_order(order)
 
-if float(amount) > 0:
-    cancel = bithumb.cancel_order(order)
-    print(cancel)
+if __name__ == '__main__':
+    a = price_filter(20717000)
+    print(a)
+    print(amount_filter(a, 3000))
 
