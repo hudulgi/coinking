@@ -2,6 +2,7 @@ import time
 import pybithumb
 import datetime
 import socket
+from pybithumb_trade import *
 
 
 def get_db_and_target_price(ticker, now_day):
@@ -67,6 +68,19 @@ def update_target_watch_coin(_target_coins, now_day):
     return _watch_coin, _buy_flag
 
 
+def sell_targets(_target_coins):
+    for _coin in _target_coins:
+        sell_crypto_currency(_coin)
+
+
+def buy_targets(ticker, price):
+    modified_price = price_filter(price)
+    modified_amount = amount_filter(modified_price, unit_price)
+    order = bithumb.sell_limit_order(ticker, modified_price, modified_amount)
+    print(order)
+    return order
+
+
 now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
@@ -76,6 +90,9 @@ PORT = 6000
 
 # 감시 코인
 target_coins = ["BTC", "ETH", "XRP"]
+
+# 종목 당 매수금액
+unit_price = 1500
 
 target_price = dict()
 current_price = dict()
@@ -88,10 +105,14 @@ while True:
         current_price = dict()
         print('\n', now)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
+
+        sell_targets(target_coins)
         watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 
+    all_current = pybithumb.get_current_price("ALL")
+
     for coin in watch_coin:
-        _current = pybithumb.get_current_price(coin)
+        _current = float(all_current[coin]["closing_price"])
 
         if _current is None:
             print("예외발생")
@@ -102,6 +123,7 @@ while True:
         if _current >= target_price[coin] and buy_flag[coin]:
             buy_flag[coin] = False
             print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
-    print(f"\r{current_price}", end='')
+            #buy_targets(coin, _current)
 
+    print(f"\r{current_price}", end='')
     time.sleep(1)
