@@ -1,8 +1,8 @@
 import time
-import pybithumb
 import datetime
 import socket
 from pybithumb_trade import *
+import os
 
 
 def get_db_and_target_price(ticker, now_day):
@@ -76,9 +76,26 @@ def sell_targets(_target_coins):
 def buy_targets(ticker, price):
     modified_price = price_filter(price)
     modified_amount = amount_filter(modified_price, unit_price)
-    order = bithumb.buy_limit_order(ticker, modified_price, modified_amount)
-    print(order)
-    return order
+    order_result = bithumb.buy_limit_order(ticker, modified_price, modified_amount)
+    print(order_result)
+    if type(order_result) == tuple:
+        return order_result
+    else:
+        return False
+
+
+def buy_list_init(_date):
+    name = "buy_list/buy_" + _date.strftime("%y%m%d") + ".txt"
+    print(name)
+    if not os.path.exists(name):  # 파일이 존재하지 않는 경우에만 초기화 진행
+        with open(name, 'w') as f:
+            f.write("")
+    return name
+
+
+def buy_list_write(name, msg):
+    with open(name, 'a') as f:
+        f.write(msg + "\n")
 
 
 now = datetime.datetime.now()
@@ -92,11 +109,11 @@ PORT = 6000
 target_coins = ["BTC", "ETH", "XRP"]
 
 # 종목 당 매수금액
-unit_price = 30000
+unit_price = 10000
 
 target_price = dict()
 current_price = dict()
-
+buy_list_name = buy_list_init(now)
 watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 
 while True:
@@ -105,6 +122,7 @@ while True:
         current_price = dict()
         print('\n', now)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
+        buy_list_name = buy_list_init(now)
 
         sell_targets(target_coins)
         watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
@@ -119,9 +137,12 @@ while True:
         current_price[coin] = _current
 
         if _current >= target_price[coin] and buy_flag[coin]:
-            buy_flag[coin] = False
             print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
-            buy_targets(coin, _current)
+
+            result = buy_targets(coin, _current)
+            if result:
+                buy_flag[coin] = False
+                buy_list_write(buy_list_name, result)
 
     print(f"\r{current_price}", end='')
     time.sleep(1)
