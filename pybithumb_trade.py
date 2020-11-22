@@ -65,7 +65,9 @@ def sell_crypto_currency(ticker):
 
 
 if __name__ == '__main__':
-    a = price_filter(20717000)
-    print(a)
-    print(amount_filter(a, 3000))
-
+    aa = price_filter(20717000)
+    print(aa)
+    print(amount_filter(aa, 3000))
+    print(bithumb.get_balance("XRP")[2])
+    order = bithumb.buy_limit_order("XRP", 300, 2.0)
+    print(order)

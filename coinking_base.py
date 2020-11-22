@@ -76,7 +76,7 @@ def sell_targets(_target_coins):
 def buy_targets(ticker, price):
     modified_price = price_filter(price)
     modified_amount = amount_filter(modified_price, unit_price)
-    order = bithumb.sell_limit_order(ticker, modified_price, modified_amount)
+    order = bithumb.buy_limit_order(ticker, modified_price, modified_amount)
     print(order)
     return order
 
@@ -92,7 +92,7 @@ PORT = 6000
 target_coins = ["BTC", "ETH", "XRP"]
 
 # 종목 당 매수금액
-unit_price = 1500
+unit_price = 30000
 
 target_price = dict()
 current_price = dict()
@@ -110,20 +110,18 @@ while True:
         watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 
     all_current = pybithumb.get_current_price("ALL")
+    if all_current is None:
+        print("예외발생")
+        continue
 
     for coin in watch_coin:
         _current = float(all_current[coin]["closing_price"])
-
-        if _current is None:
-            print("예외발생")
-            continue
-
         current_price[coin] = _current
 
         if _current >= target_price[coin] and buy_flag[coin]:
             buy_flag[coin] = False
             print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
-            #buy_targets(coin, _current)
+            buy_targets(coin, _current)
 
     print(f"\r{current_price}", end='')
     time.sleep(1)
