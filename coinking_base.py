@@ -124,14 +124,21 @@ unit_price = 10000
 
 target_price = dict()
 current_price = dict()
+michaegyul = True
+
 buy_list_name = buy_list_init(now)
 watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 buy_flag = buy_flag_init_check(buy_list_name, buy_flag)
 
 while True:
     now = datetime.datetime.now()
+    if mid - datetime.timedelta(minutes=60) < now < mid - datetime.timedelta(minutes=59):
+        if michaegyul:
+            michaegyul = False
+
     if mid < now < mid + datetime.timedelta(seconds=10):
         current_price = dict()
+        michaegyul = True
         print('\n', now)
         mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
         buy_list_name = buy_list_init(now)
