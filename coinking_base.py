@@ -122,7 +122,7 @@ now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
 # 소켓 설정 및 접속
-HOST = '127.0.0.1'
+HOST = 'coinking-server'
 PORT = 6000
 
 # 감시 코인
