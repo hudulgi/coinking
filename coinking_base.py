@@ -99,14 +99,23 @@ def buy_list_write(_name, _msg):
 
 
 def buy_flag_init_check(_name, _buy_flag):
-    if os.path.exists(_name):
-        with open(_name, 'r') as f:
-            lines = f.readlines()
-            for line in lines:
-                _order = eval(line)
-                _buy_flag[_order[1]] = False
-                print(f"기존 주문내역 확인 : {_order}")
+    with open(_name, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            _order = eval(line)
+            _buy_flag[_order[1]] = False
+            print(f"기존 주문내역 확인 : {_order}")
     return _buy_flag
+
+
+def order_cancel(_name):
+    with open(_name, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            _order = eval(line)
+            if bithumb.get_outstanding_order(_order) > 0:
+                bithumb.cancel_order(_order)
+                print(f"주문취소 : {_order}")
 
 
 now = datetime.datetime.now()
@@ -135,6 +144,8 @@ while True:
     if mid - datetime.timedelta(minutes=60) < now < mid - datetime.timedelta(minutes=59):
         if michaegyul:
             michaegyul = False
+            print("미체결 주문 취소")
+            order_cancel(buy_list_name)
 
     if mid < now < mid + datetime.timedelta(seconds=10):
         current_price = dict()
@@ -148,7 +159,7 @@ while True:
 
     all_current = pybithumb.get_current_price("ALL")
     if all_current is None:
-        print("예외발생")
+        print(f"예외발생 {now}")
         continue
 
     for coin in watch_coin:
