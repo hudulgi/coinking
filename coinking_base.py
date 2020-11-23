@@ -93,9 +93,20 @@ def buy_list_init(_date):
     return name
 
 
-def buy_list_write(name, msg):
-    with open(name, 'a') as f:
-        f.write(msg + "\n")
+def buy_list_write(_name, _msg):
+    with open(_name, 'a') as f:
+        f.write(_msg + "\n")
+
+
+def buy_flag_init_check(_name, _buy_flag):
+    if os.path.exists(_name):
+        with open(_name, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                _order = eval(line)
+                _buy_flag[_order[1]] = False
+                print(f"기존 주문내역 확인 : {_order}")
+    return _buy_flag
 
 
 now = datetime.datetime.now()
@@ -115,6 +126,7 @@ target_price = dict()
 current_price = dict()
 buy_list_name = buy_list_init(now)
 watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
+buy_flag = buy_flag_init_check(buy_list_name, buy_flag)
 
 while True:
     now = datetime.datetime.now()
