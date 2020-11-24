@@ -3,6 +3,7 @@ import datetime
 import socket
 from pybithumb_trade import *
 import os
+import sys
 
 
 def get_db_and_target_price(ticker, now_day):
@@ -166,18 +167,20 @@ def order_cancel(_name):
 
 
 if __name__ == '__main__':
+    args = sys.argv[1:]
+
     now = datetime.datetime.now()
     mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
     # 소켓 설정 및 접속
-    HOST = '127.0.0.1'
-    PORT = 6000
+    HOST = args[0]
+    PORT = int(args[1])
 
     # 감시 코인
-    target_coins = ["BTC", "ETH", "XRP"]
+    target_coins = args[2].split(",")
 
     # 종목 당 매수금액
-    unit_price = 30000
+    unit_price = int(args[3])
 
     current_price = dict()
     michaegyul = True
