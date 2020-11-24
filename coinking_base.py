@@ -158,6 +158,8 @@ def order_cancel(_name):
         lines = f.readlines()
         for line in lines:
             _order = eval(line)
+            if bithumb.get_outstanding_order(_order) is None:
+                continue
             if bithumb.get_outstanding_order(_order) > 0:  # 미체결 수량 조회
                 bithumb.cancel_order(_order)  # 주문 취소
                 print(f"주문취소 : {_order}")
@@ -175,7 +177,7 @@ if __name__ == '__main__':
     target_coins = ["BTC", "ETH", "XRP"]
 
     # 종목 당 매수금액
-    unit_price = 10000
+    unit_price = 30000
 
     current_price = dict()
     michaegyul = True
@@ -185,7 +187,6 @@ if __name__ == '__main__':
     buy_flag = buy_flag_init_check(buy_list_name, buy_flag)  # 주문기록 이용하여 중복방지 갱신
     buy_flag = buy_flag_jango_check(buy_flag, target_coins)  # 잔고 이용하여 중복방지 갱신
     print(watch_coin, buy_flag)
-
 
     while True:
         now = datetime.datetime.now()
