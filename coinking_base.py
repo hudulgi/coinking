@@ -77,6 +77,7 @@ def buy_targets(ticker, price):
     modified_price = price_filter(price)
     modified_amount = amount_filter(modified_price, unit_price)
     order_result = bithumb.buy_limit_order(ticker, modified_price, modified_amount)
+    print(ticker, modified_price, modified_amount)
     print(order_result)
     if type(order_result) == tuple:
         return order_result
@@ -95,7 +96,7 @@ def buy_list_init(_date):
 
 def buy_list_write(_name, _msg):
     with open(_name, 'a') as f:
-        f.write(_msg + "\n")
+        f.write(str(_msg) + "\n")
 
 
 def buy_flag_init_check(_name, _buy_flag):
@@ -105,6 +106,15 @@ def buy_flag_init_check(_name, _buy_flag):
             _order = eval(line)
             _buy_flag[_order[1]] = False
             print(f"기존 주문내역 확인 : {_order}")
+    return _buy_flag
+
+
+def buy_flag_jango_check(_buy_flag, _target_coins):
+    for _coin in _target_coins:
+        _unit = bithumb.get_balance(_coin)[0]
+        print(f"보유잔고 {_coin} : {_unit}")
+        if _unit > 0.0001:
+            _buy_flag[_coin] = False
     return _buy_flag
 
 
@@ -122,7 +132,7 @@ now = datetime.datetime.now()
 mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
 # 소켓 설정 및 접속
-HOST = 'coinking-server'
+HOST = '127.0.0.1'
 PORT = 6000
 
 # 감시 코인
@@ -138,6 +148,9 @@ michaegyul = True
 buy_list_name = buy_list_init(now)
 watch_coin, buy_flag = update_target_watch_coin(target_coins, now.day)
 buy_flag = buy_flag_init_check(buy_list_name, buy_flag)
+buy_flag = buy_flag_jango_check(buy_flag, target_coins)
+print(watch_coin, buy_flag)
+
 
 while True:
     now = datetime.datetime.now()
@@ -169,7 +182,7 @@ while True:
         if _current >= target_price[coin] and buy_flag[coin]:
             print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
 
-            result = buy_targets(coin, _current)
+            result = buy_targets(coin, target_price[coin])
             if result:
                 buy_flag[coin] = False
                 buy_list_write(buy_list_name, result)
