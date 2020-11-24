@@ -181,6 +181,7 @@ if __name__ == '__main__':
 
     # 종목 당 매수금액
     unit_price = int(args[3])
+    print(f"종목 당 매수금액 {unit_price}")
 
     current_price = dict()
     michaegyul = True
