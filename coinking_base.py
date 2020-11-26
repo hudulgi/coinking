@@ -15,7 +15,7 @@ def get_db_and_target_price(ticker, now_day):
     :param ticker: ticker
     :return: 캔들 데이터
     """
-    df = pybithumb.get_candlestick(ticker)
+    df = get_candle(ticker)
     last_index1 = df.index[-1]  # 1일전
     last_index2 = df.index[-2]  # 2일전
 
@@ -24,7 +24,7 @@ def get_db_and_target_price(ticker, now_day):
         # 자정이 막 지났을 경우 제대로 데이터가 제대로 없을 수 있음
         print("DB 수신 대기")
         time.sleep(10)
-        df = pybithumb.get_candlestick(ticker)
+        df = get_candle(ticker)
         last_index1 = df.index[-1]  # 1일전
         last_index2 = df.index[-2]  # 2일전
 
@@ -39,6 +39,14 @@ def get_db_and_target_price(ticker, now_day):
     df.to_csv(f"data/{ticker}.csv")  # DB파일 저장
 
     return _target_price
+
+
+def get_candle(ticker):
+    df = None
+    while df is None:
+        df = pybithumb.get_candlestick(ticker)
+        time.sleep(0.5)
+    return df
 
 
 def update_target_watch_coin(_target_coins, now_day):
@@ -143,9 +151,12 @@ def buy_flag_jango_check(_buy_flag, _target_coins):
     :return: 갱신된 중복방지변수
     """
     for _coin in _target_coins:
-        _unit = bithumb.get_balance(_coin)[0]
-        print(f"보유잔고 {_coin} : {_unit}")
-        if _unit > 0.0001:
+        _unit = None
+        while _unit is None:
+            _unit = bithumb.get_balance(_coin)
+            time.sleep(0.5)
+        print(f"보유잔고 {_coin} : {_unit[0]}")
+        if _unit[0] > 0.0001:
             _buy_flag[_coin] = False
     return _buy_flag
 

@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 ENV HOST "coinking-server"
 ENV PORT 6000
-ENV TARGETS "BTC,ETH,XRP"
+ENV TARGETS "BTC,ETH,XRP,XLM,EOS,BCH"
 ENV PRICE 30000
 
 RUN mkdir /usr/src/app/data && \
