@@ -176,11 +176,20 @@ def order_cancel(_name):
         lines = f.readlines()
         for line in lines:
             _order = eval(line)
-            if bithumb.get_outstanding_order(_order) is None:
+            _out = None
+            n = 0
+            while (_out is None) and (n < 5):
+                # 일정 시간이 지난 주문은 None이 반환되기 때문에 None 으로는 통신이상 판단 어려움
+                # 5회 반복하여 재수신 실행
+                _out = bithumb.get_outstanding_order(_order)
+                time.sleep(0.2)
+                n += 1
+                print(n)
+            if _out is None:
                 continue
-            if bithumb.get_outstanding_order(_order) > 0:  # 미체결 수량 조회
-                bithumb_bridge(bithumb.cancel_order, _order)  # 주문 취소
-                print(f"주문취소 : {_order}")
+            if int(_out) > 0:
+                _result = bithumb_bridge(bithumb.cancel_order, _order)  # 주문 취소
+                print(f"주문취소 : {_order}, {_result}")
 
 
 if __name__ == '__main__':
