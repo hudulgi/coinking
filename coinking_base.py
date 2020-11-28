@@ -89,6 +89,14 @@ def sell_targets(_target_coins):
         sell_crypto_currency(_coin)
 
 
+def sell_crypto_currency(ticker):
+    unit = bithumb_bridge(bithumb.get_balance, ticker)[0]
+    print(f"보유잔고 {ticker} : {unit}")
+    if unit > 0:
+        bithumb_bridge(bithumb.sell_market_order, ticker, unit)
+        print(f"매도주문 {ticker} : {unit}")
+
+
 def buy_targets(ticker, price):
     """
     입력된 매수가격을 빗썸 정책에 맞게 수정하여 수량 계산
@@ -99,7 +107,7 @@ def buy_targets(ticker, price):
     """
     modified_price = price_filter(price)  # 가격 재계산
     modified_amount = amount_filter(modified_price, unit_price)  # 수량 재계산
-    order_result = bithumb.buy_limit_order(ticker, modified_price, modified_amount)  # 주문 실행
+    order_result = bithumb_bridge(bithumb.buy_limit_order, ticker, modified_price, modified_amount)  # 주문 실행
     print(ticker, modified_price, modified_amount)
     print(order_result)
     if type(order_result) == tuple:

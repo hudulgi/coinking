@@ -65,14 +65,6 @@ def amount_filter(price, ref):
     return int(_amount // a * a)
 
 
-def sell_crypto_currency(ticker):
-    unit = bithumb.get_balance(ticker)[0]
-    print(f"보유잔고 {ticker} : {unit}")
-    if unit > 0:
-        bithumb.sell_market_order(ticker, unit)
-        print(f"매도주문 {ticker} : {unit}")
-
-
 if __name__ == '__main__':
     args = sys.argv[1:]
     aa = price_filter(float(args[0]))
