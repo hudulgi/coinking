@@ -7,6 +7,13 @@ import sys
 
 
 def bithumb_bridge(func_name, *func_args):
+    """
+    pybithumb 모듈은 통신이상 등이 발생하면 None이 반환된다.
+    반환값을 검사하여 None이 반환 된 경우 재송수신을 수행
+    :param func_name: pybithumb 함수명
+    :param func_args: 함수 인자
+    :return: 원 함수 반환 값
+    """
     recieved = None
     while recieved is None:
         recieved = func_name(*func_args)
@@ -224,7 +231,7 @@ if __name__ == '__main__':
             # 오후 11시에 미체결 주문 취소 실행
             if michaegyul:
                 michaegyul = False
-                print("미체결 주문 취소")
+                print("\n미체결 주문 취소")
                 order_cancel(buy_list_name)  # 미체결 취소
 
         if mid < now < mid + datetime.timedelta(seconds=10):
@@ -249,7 +256,7 @@ if __name__ == '__main__':
             current_price[coin] = _current
 
             if _current >= target_price[coin] and buy_flag[coin]:
-                print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
+                print(f"\n매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
 
                 result = buy_targets(coin, target_price[coin])  # 주문 실행
                 if result:
