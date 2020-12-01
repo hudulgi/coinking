@@ -14,12 +14,12 @@ def bithumb_bridge(func_name, *func_args):
     return recieved
 
 
-def get_db_and_target_price(ticker, now_day):
+def get_db_and_target_price(ticker, _now):
     """
     캔들 데이터 수신하여 마지막 데이터 검사
     자정직후 당일/전일 데이터가 없을 수 있으므로 마지막 데이터를 검사한다.
     데이터 문제 없을 경우 csv파일 출력
-    :param now_day: 오늘 날짜(int)
+    :param _now: 오늘 날짜(datetime)
     :param ticker: ticker
     :return: 캔들 데이터
     """
@@ -27,7 +27,10 @@ def get_db_and_target_price(ticker, now_day):
     last_index1 = df.index[-1]  # 1일전
     last_index2 = df.index[-2]  # 2일전
 
-    while not ((last_index1.day == now_day) and (last_index2.day == now_day - 1)):
+    now1 = _now.day
+    now2 = (_now - datetime.timedelta(1)).day
+
+    while not ((last_index1.day == now1) and (last_index2.day == now2)):
         # 캔들데이터에서 전일과 전전일이 데이터가 제대로 있는지 검사하여 잘못됐을 경우 대기하여 재수신
         # 자정이 막 지났을 경우 제대로 데이터가 제대로 없을 수 있음
         print("DB 수신 대기")
@@ -36,7 +39,7 @@ def get_db_and_target_price(ticker, now_day):
         last_index1 = df.index[-1]  # 1일전
         last_index2 = df.index[-2]  # 2일전
 
-    print(f"{now_day}  :  {last_index2}  :  {last_index1}")
+    print(f"{now1}  :  {last_index2}  :  {last_index1}")
     yesterday = df.iloc[-2]  # 전일 데이터
     today_open = yesterday['close']
     yesterday_high = yesterday['high']
@@ -49,10 +52,10 @@ def get_db_and_target_price(ticker, now_day):
     return _target_price
 
 
-def update_target_watch_coin(_target_coins, now_day):
+def update_target_watch_coin(_target_coins, _now):
     """
     예측서버로 ticker 전송하여 예측결과 수신
-    :param now_day: 오늘 날짜(int)
+    :param _now: 오늘 날짜(datetime)
     :param _target_coins: ticker
     :return: 당일 감시 리스트, 중복 알림 방지 딕셔너리
     """
@@ -66,7 +69,7 @@ def update_target_watch_coin(_target_coins, now_day):
     print("connected to server")
 
     for _coin in _target_coins:
-        _target_price[_coin] = get_db_and_target_price(_coin, now_day)  # DB검증 및 저장, 목표가 취득
+        _target_price[_coin] = get_db_and_target_price(_coin, _now)  # DB검증 및 저장, 목표가 취득
         client_socket.sendall(_coin.encode())  # 예측서버와 통신
         _prd = client_socket.recv(1024).decode()  # 예측결과 수신 (W/L)
         print(_coin, _prd)
@@ -196,7 +199,7 @@ if __name__ == '__main__':
     michaegyul = True
 
     buy_list_name = buy_list_init(now)  # 주문기록 파일 초기화
-    watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now.day)  # 당일감시종목, 중복방지, 목표가 갱신
+    watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now)  # 당일감시종목, 중복방지, 목표가 갱신
     buy_flag = buy_flag_init_check(buy_list_name, buy_flag)  # 주문기록 이용하여 중복방지 갱신
     buy_flag = buy_flag_jango_check(buy_flag, target_coins)  # 잔고 이용하여 중복방지 갱신
     print(watch_coin, buy_flag)
