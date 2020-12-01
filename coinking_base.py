@@ -7,6 +7,13 @@ import sys
 
 
 def bithumb_bridge(func_name, *func_args):
+    """
+    pybithumb 모듈은 통신이상 등이 발생하면 None이 반환된다.
+    반환값을 검사하여 None이 반환 된 경우 재송수신을 수행
+    :param func_name: pybithumb 함수명
+    :param func_args: 함수 인자
+    :return: 원 함수 반환 값
+    """
     recieved = None
     while recieved is None:
         recieved = func_name(*func_args)
@@ -92,6 +99,14 @@ def sell_targets(_target_coins):
         sell_crypto_currency(_coin)
 
 
+def sell_crypto_currency(ticker):
+    unit = bithumb_bridge(bithumb.get_balance, ticker)[0]
+    print(f"보유잔고 {ticker} : {unit}")
+    if unit > 0:
+        bithumb_bridge(bithumb.sell_market_order, ticker, unit)
+        print(f"매도주문 {ticker} : {unit}")
+
+
 def buy_targets(ticker, price):
     """
     입력된 매수가격을 빗썸 정책에 맞게 수정하여 수량 계산
@@ -102,7 +117,7 @@ def buy_targets(ticker, price):
     """
     modified_price = price_filter(price)  # 가격 재계산
     modified_amount = amount_filter(modified_price, unit_price)  # 수량 재계산
-    order_result = bithumb.buy_limit_order(ticker, modified_price, modified_amount)  # 주문 실행
+    order_result = bithumb_bridge(bithumb.buy_limit_order, ticker, modified_price, modified_amount)  # 주문 실행
     print(ticker, modified_price, modified_amount)
     print(order_result)
     if type(order_result) == tuple:
@@ -171,11 +186,20 @@ def order_cancel(_name):
         lines = f.readlines()
         for line in lines:
             _order = eval(line)
-            if bithumb.get_outstanding_order(_order) is None:
+            _out = None
+            n = 0
+            while (_out is None) and (n < 5):
+                # 일정 시간이 지난 주문은 None이 반환되기 때문에 None 으로는 통신이상 판단 어려움
+                # 5회 반복하여 재수신 실행
+                _out = bithumb.get_outstanding_order(_order)
+                time.sleep(0.2)
+                n += 1
+                print(n)
+            if _out is None:
                 continue
-            if bithumb.get_outstanding_order(_order) > 0:  # 미체결 수량 조회
-                bithumb_bridge(bithumb.cancel_order, _order)  # 주문 취소
-                print(f"주문취소 : {_order}")
+            if int(_out) > 0:
+                _result = bithumb_bridge(bithumb.cancel_order, _order)  # 주문 취소
+                print(f"주문취소 : {_order}, {_result}")
 
 
 if __name__ == '__main__':
@@ -210,7 +234,7 @@ if __name__ == '__main__':
             # 오후 11시에 미체결 주문 취소 실행
             if michaegyul:
                 michaegyul = False
-                print("미체결 주문 취소")
+                print("\n미체결 주문 취소")
                 order_cancel(buy_list_name)  # 미체결 취소
 
         if mid < now < mid + datetime.timedelta(seconds=10):
@@ -235,7 +259,7 @@ if __name__ == '__main__':
             current_price[coin] = _current
 
             if _current >= target_price[coin] and buy_flag[coin]:
-                print(f"매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
+                print(f"\n매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
 
                 result = buy_targets(coin, target_price[coin])  # 주문 실행
                 if result:
