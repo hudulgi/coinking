@@ -202,6 +202,21 @@ def order_cancel(_name):
                 print(f"주문취소 : {_order}, {_result}")
 
 
+def get_unit_price(_watch_coin):
+    """
+    당일 감시 종목수와 보유원화를 이용하여 종목 당 매수금액 계산
+    :param _watch_coin: 당일 감시 종목
+    :return: 종목 당 매수금액
+    """
+    krw = bithumb_bridge(bithumb.get_balance, "BTC")[2]
+    try:
+        _unit_price = krw / len(_watch_coin)
+    except ZeroDivisionError:
+        _unit_price = 0
+    print(f"종목 당 매수금액 {_unit_price}")
+    return _unit_price
+
+
 if __name__ == '__main__':
     args = sys.argv[1:]
 
@@ -215,10 +230,6 @@ if __name__ == '__main__':
     # 감시 코인
     target_coins = args[2].split(",")
 
-    # 종목 당 매수금액
-    unit_price = int(args[3])
-    print(f"종목 당 매수금액 {unit_price}")
-
     current_price = dict()
     michaegyul = True
 
@@ -227,6 +238,9 @@ if __name__ == '__main__':
     buy_flag = buy_flag_init_check(buy_list_name, buy_flag)  # 주문기록 이용하여 중복방지 갱신
     buy_flag = buy_flag_jango_check(buy_flag, target_coins)  # 잔고 이용하여 중복방지 갱신
     print(watch_coin, buy_flag)
+
+    # 종목 당 매수금액
+    unit_price = get_unit_price(watch_coin)
 
     while True:
         now = datetime.datetime.now()
@@ -247,7 +261,8 @@ if __name__ == '__main__':
 
             sell_targets(target_coins)  # 보유 잔고 매도
 
-            watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now.day)
+            watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now)
+            unit_price = get_unit_price(watch_coin)
 
         all_current = pybithumb.get_current_price("ALL")  # 현재가 수신
         if all_current is None:
