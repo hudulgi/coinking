@@ -1,9 +1,10 @@
 import time
 import datetime
 import socket
-from pybithumb_trade import *
 import os
-import sys
+import pybithumb
+from pybithumb_trade import *
+from configparser import ConfigParser
 
 
 def bithumb_bridge(func_name, *func_args):
@@ -218,17 +219,23 @@ def get_unit_price(_watch_coin):
 
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
+    parser = ConfigParser()
+    parser.read('config.ini')
 
     now = datetime.datetime.now()
     mid = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(1)
 
     # 소켓 설정 및 접속
-    HOST = args[0]
-    PORT = int(args[1])
+    HOST = parser.get('server', 'host')
+    PORT = parser.getint('server', 'port')
 
     # 감시 코인
-    target_coins = args[2].split(",")
+    target_coins = parser.get('items', 'target_coins').split(",")
+
+    con_key = parser.get('keys', 'con_key')
+    sec_key = parser.get('keys', 'sec_key')
+
+    bithumb = pybithumb.Bithumb(con_key, sec_key)
 
     current_price = dict()
     michaegyul = True

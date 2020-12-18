@@ -2,8 +2,8 @@
 .idea/
 
 data/
-/mykey.py
 
 __pycache__/
 
 buy_list/
+/config.ini

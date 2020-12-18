@@ -1,11 +1,4 @@
-import pybithumb
-import mykey
 import sys
-
-con_key = mykey.con_key
-sec_key = mykey.sec_key
-
-bithumb = pybithumb.Bithumb(con_key, sec_key)
 
 
 def price_filter(value):
