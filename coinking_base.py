@@ -198,7 +198,7 @@ def order_cancel(_name):
                 print(n)
             if _out is None:
                 continue
-            if int(_out) > 0:
+            if int(_out.replace(",", "")) > 0:
                 _result = bithumb_bridge(bithumb.cancel_order, _order)  # 주문 취소
                 print(f"주문취소 : {_order}, {_result}")
 
