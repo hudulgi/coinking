@@ -211,7 +211,7 @@ def get_unit_price(_watch_coin):
     """
     krw = bithumb_bridge(bithumb.get_balance, "BTC")[2]
     try:
-        _unit_price = krw / len(_watch_coin)
+        _unit_price = krw / len(_watch_coin) * 0.99
     except ZeroDivisionError:
         _unit_price = 0
     print(f"종목 당 매수금액 {_unit_price}")
