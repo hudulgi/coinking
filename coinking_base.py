@@ -90,11 +90,7 @@ def update_target_watch_coin(_target_coins, _now):
             try:
                 _prd = communicate_with_server(_coin)
                 commu_check = False
-            except BrokenPipeError as e:
-                print(e)
-                commu_check = True
-                time.sleep(10)
-            except ConnectionRefusedError as e:
+            except (BrokenPipeError, ConnectionRefusedError) as e:
                 print(e)
                 commu_check = True
                 time.sleep(10)
