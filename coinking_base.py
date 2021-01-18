@@ -60,6 +60,18 @@ def get_db_and_target_price(ticker, _now):
     return _target_price
 
 
+def communicate_with_server(_send):
+    # 실제적인 서버와의 통신 수행
+    # 서버 접속
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((HOST, PORT))
+    print("connected to server")
+    client_socket.sendall(_send.encode())  # 예측서버와 통신
+    _reply = client_socket.recv(1024).decode()  # 예측결과 수신 (W/L)
+    client_socket.close()  # 통신 종료
+    return _reply
+
+
 def update_target_watch_coin(_target_coins, _now):
     """
     예측서버로 ticker 전송하여 예측결과 수신
@@ -71,23 +83,27 @@ def update_target_watch_coin(_target_coins, _now):
     _buy_flag = dict()  # 중복 매수 방지 변수
     _target_price = dict()
 
-    # 서버 접속
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((HOST, PORT))
-    print("connected to server")
-
     for _coin in _target_coins:
         _target_price[_coin] = get_db_and_target_price(_coin, _now)  # DB검증 및 저장, 목표가 취득
-        client_socket.sendall(_coin.encode())  # 예측서버와 통신
-        _prd = client_socket.recv(1024).decode()  # 예측결과 수신 (W/L)
+        commu_check = True
+        while commu_check:  # 통신 에러 발생 처리 
+            try:
+                _prd = communicate_with_server(_coin)
+                commu_check = False
+            except BrokenPipeError as e:
+                print(e)
+                commu_check = True
+                time.sleep(10)
         print(_coin, _prd)
+
         if _prd == 'W':
             _buy_flag[_coin] = True
             _watch_coin.append(_coin)
         elif _prd == 'L':
             _buy_flag[_coin] = False
 
-    client_socket.close()  # 통신 종료
+        time.sleep(1)
+
     return _watch_coin, _buy_flag, _target_price
 
 
@@ -242,6 +258,7 @@ if __name__ == '__main__':
 
     buy_list_name = buy_list_init(now)  # 주문기록 파일 초기화
     watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now)  # 당일감시종목, 중복방지, 목표가 갱신
+
     buy_flag = buy_flag_init_check(buy_list_name, buy_flag)  # 주문기록 이용하여 중복방지 갱신
     buy_flag = buy_flag_jango_check(buy_flag, target_coins)  # 잔고 이용하여 중복방지 갱신
     print(watch_coin, buy_flag)
