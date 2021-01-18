@@ -94,6 +94,10 @@ def update_target_watch_coin(_target_coins, _now):
                 print(e)
                 commu_check = True
                 time.sleep(10)
+            except ConnectionRefusedError as e:
+                print(e)
+                commu_check = True
+                time.sleep(10)
         print(_coin, _prd)
 
         if _prd == 'W':
@@ -102,7 +106,7 @@ def update_target_watch_coin(_target_coins, _now):
         elif _prd == 'L':
             _buy_flag[_coin] = False
 
-        time.sleep(1)
+        time.sleep(5)
 
     return _watch_coin, _buy_flag, _target_price
 
