@@ -69,6 +69,7 @@ def communicate_with_server(_send):
     client_socket.sendall(_send.encode())  # 예측서버와 통신
     _reply = client_socket.recv(1024).decode()  # 예측결과 수신 (W/L)
     client_socket.close()  # 통신 종료
+
     return _reply
 
 
@@ -89,7 +90,8 @@ def update_target_watch_coin(_target_coins, _now):
         while commu_check:  # 통신 에러 발생 처리 
             try:
                 _prd = communicate_with_server(_coin)
-                commu_check = False
+                if (_prd == "W") or (_prd == "L"):
+                    commu_check = False
             except (BrokenPipeError, ConnectionRefusedError) as e:
                 print(e)
                 commu_check = True
