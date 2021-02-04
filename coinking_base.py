@@ -263,6 +263,7 @@ if __name__ == '__main__':
 
     buy_flag = buy_flag_init_check(buy_list_name, buy_flag)  # 주문기록 이용하여 중복방지 갱신
     buy_flag = buy_flag_jango_check(buy_flag, target_coins)  # 잔고 이용하여 중복방지 갱신
+    buy_flag2 = buy_flag.copy()  # 손절 체크를 위한 변수
     print(watch_coin, buy_flag)
 
     # 종목 당 매수금액
@@ -288,6 +289,7 @@ if __name__ == '__main__':
             sell_targets(target_coins)  # 보유 잔고 매도
 
             watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now)
+            buy_flag2 = buy_flag.copy()
             unit_price = get_unit_price(watch_coin)
 
         all_current = pybithumb.get_current_price("ALL")  # 현재가 수신
@@ -306,6 +308,14 @@ if __name__ == '__main__':
                 if result:
                     buy_flag[coin] = False
                     buy_list_write(buy_list_name, result)  # 주문 기록
+
+            if buy_flag[coin] is False and buy_flag2[coin]:
+                if _current <= target_price[coin] * 0.9:
+                    print(f"\n{coin} 10% 손절 발동!!")
+                    #sell_crypto_currency(coin)
+
+                if _current >= target_price[coin] * 1.01:
+                    print(f"\n{coin} 1% 익절 발동!!")
 
         print(f"\r{current_price}", end='')
         time.sleep(1)
