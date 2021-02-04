@@ -5,6 +5,7 @@ import os
 import pybithumb
 from pybithumb_trade import *
 from configparser import ConfigParser
+import telegram
 
 
 def bithumb_bridge(func_name, *func_args):
@@ -236,6 +237,10 @@ def get_unit_price(_watch_coin):
     return _unit_price
 
 
+def send_telegram(_msg):
+    bot.sendMessage(chat_id=chat_id, text=_msg)
+
+
 if __name__ == '__main__':
     parser = ConfigParser()
     parser.read('config.ini')
@@ -250,6 +255,12 @@ if __name__ == '__main__':
     # 감시 코인
     target_coins = parser.get('items', 'target_coins').split(",")
 
+    # 텔레그램
+    token = parser.get('telegram', 'token')
+    chat_id = parser.get('telegram', 'chat_id')
+    bot = telegram.Bot(token=token)
+    send_telegram("<코인킹>\n작동을 시작합니다.")
+
     con_key = parser.get('keys', 'con_key')
     sec_key = parser.get('keys', 'sec_key')
 
@@ -260,10 +271,11 @@ if __name__ == '__main__':
 
     buy_list_name = buy_list_init(now)  # 주문기록 파일 초기화
     watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now)  # 당일감시종목, 중복방지, 목표가 갱신
+    buy_flag2 = buy_flag.copy()  # 손절 체크를 위한 변수
 
     buy_flag = buy_flag_init_check(buy_list_name, buy_flag)  # 주문기록 이용하여 중복방지 갱신
     buy_flag = buy_flag_jango_check(buy_flag, target_coins)  # 잔고 이용하여 중복방지 갱신
-    buy_flag2 = buy_flag.copy()  # 손절 체크를 위한 변수
+
     print(watch_coin, buy_flag)
 
     # 종목 당 매수금액
@@ -303,6 +315,7 @@ if __name__ == '__main__':
 
             if _current >= target_price[coin] and buy_flag[coin]:
                 print(f"\n매수알림 {coin} : 목표가격 {target_price[coin]}, 현재가 {_current}")
+                send_telegram(f"<코인킹-매수알림>\n{coin} : {target_price[coin]}")
 
                 result = buy_targets(coin, target_price[coin])  # 주문 실행
                 if result:
@@ -312,10 +325,14 @@ if __name__ == '__main__':
             if buy_flag[coin] is False and buy_flag2[coin]:
                 if _current <= target_price[coin] * 0.9:
                     print(f"\n{coin} 10% 손절 발동!!")
-                    #sell_crypto_currency(coin)
+                    send_telegram(f"<코인킹>\n{coin} 10% 손절 발동!!")
+                    sell_crypto_currency(coin)
+                    buy_flag2[coin] = False
 
-                if _current >= target_price[coin] * 1.01:
-                    print(f"\n{coin} 1% 익절 발동!!")
+                if _current >= target_price[coin] * 1.3:
+                    print(f"\n{coin} 수익 30% 돌파!!")
+                    send_telegram(f"<코인킹>\n{coin} 수익 30% 돌파!!")
+                    buy_flag2[coin] = False
 
         print(f"\r{current_price}", end='')
         time.sleep(1)

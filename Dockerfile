@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 RUN mkdir /usr/src/app/data && \
 mkdir /usr/src/app/buy_list && \
-pip install --no-cache-dir pybithumb && \
+pip install --no-cache-dir pybithumb python-telegram-bot && \
 ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 
 COPY . .
