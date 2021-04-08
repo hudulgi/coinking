@@ -279,7 +279,7 @@ if __name__ == '__main__':
     print(watch_coin, buy_flag)
 
     # 종목 당 매수금액
-    unit_price = get_unit_price(watch_coin)
+    unit_price = parser.getint('item', 'unit_price')
 
     while True:
         now = datetime.datetime.now()
