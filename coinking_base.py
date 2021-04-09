@@ -302,7 +302,7 @@ if __name__ == '__main__':
 
             watch_coin, buy_flag, target_price = update_target_watch_coin(target_coins, now)
             buy_flag2 = buy_flag.copy()
-            unit_price = get_unit_price(watch_coin)
+            #unit_price = get_unit_price(watch_coin)
 
         all_current = pybithumb.get_current_price("ALL")  # 현재가 수신
         if all_current is None:
